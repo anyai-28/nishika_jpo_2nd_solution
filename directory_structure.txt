@@ -1,0 +1,6 @@
+.
+./config
+./pretrained_models
+./pretrained_models/swin
+./pretrained_models/convnext
+./data

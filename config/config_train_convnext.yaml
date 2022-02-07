@@ -1,0 +1,192 @@
+
+General:
+    proj_name: patent
+    exp_name: ex_convnext
+    device: cuda
+    debug: False
+    seed: 28
+    epoch: &epoch 10
+    num_folds: 5
+    fold: -1
+    ncrops: 4
+    img_size: &img_size 384
+    
+Trainer:
+    gpus: [0]  # int:num, list:gpu number
+    accumulate_grad_batches: 1
+    precision: 16
+    # amp_level: O1
+    gradient_clip_val: 0.0  # 0 means don’t clip
+    benchmark: False
+    deterministic: False # cross batch でerrorでるためFalse
+    num_sanity_val_steps: 0 # train前にvalデータを動作確認する回数
+    # limit_train_batches: 0.1
+
+Model:    
+    type: ConvNextEmbeddingModel
+    params:
+        fc_dim: 512
+        base_name: convnext_base
+        in_22k: True
+        img_size: *img_size
+        drop_path_rate: 0.0
+        pretrained: True
+
+Dataset: 
+    type: JpoDataset_label
+    loader:
+        train:
+            batch_size: 16
+            shuffle: True
+            num_workers: 8
+            pin_memory: True
+            drop_last: True
+        val: &val_loader
+            batch_size: 64
+            shuffle: False
+            num_workers: 8
+            pin_memory: True
+            drop_last: False
+        test:
+            batch_size: 128
+            shuffle: False
+            num_workers: 8
+            pin_memory: True
+            drop_last: False
+
+Transform: 
+    mean: &mean [0.485, 0.456, 0.406]  # RGB
+    std: &std [0.229, 0.224, 0.225]  # RGB
+    train:
+        base: 
+            - name: LongestMaxSize
+              params:
+                    {'p':1.0, 'max_size':*img_size, 'interpolation':2}
+            - name: PadIfNeeded
+              params: 
+                    {'p':1.0, 'min_height':*img_size, 'min_width':*img_size, 'border_mode':0, 'value':[255, 255, 255]}
+                    # {'p':1.0, 'min_height':*img_height, 'min_width':*img_width, 'border_mode':0}
+            - name: Affine
+              params:
+                    {'p':1.0, 'scale':0.9, 'cval':[255, 255, 255]}
+            - name: RandomResizedCrop
+              params:
+                    {'p':1.0, 'height':*img_size, 'width':*img_size, 'scale':[0.7, 1.0]}
+            - name: RGBShift
+              params:
+                    {'p':0.5}
+            - name: ToGray
+              params:
+                    {'p':0.5}
+            - name: HorizontalFlip
+              params:
+                    {'p':0.5}
+            - name: Normalize
+              params:
+                    {'mean': *mean, 'std': *std}
+        hard: &train_hard
+            - name: LongestMaxSize
+              params:
+                    {'p':1.0, 'max_size':*img_size, 'interpolation':2}
+            - name: RGBShift
+              params:
+                    {'p':0.5}
+            # - name: RandomBrightness
+            #   params:
+            #         {'p':0.5, 'limit':[0.05, 0.2]}
+            - name: ToGray
+              params:
+                    {'p':0.5}
+            - name: HorizontalFlip
+              params:
+                    {'p':0.5}
+            # - name: VerticalFlip
+            #   params:
+            #         {'p':0.1}
+            - name: OneOf
+              params:
+                    {'p':1.0}
+              member:
+                - name: Compose
+                  params:
+                    {'p':1.0}
+                  member:
+                    - name: MakePadTextLogo
+                      params:
+                        {'p':1.0, 'size':*img_size}
+                    - name: PadIfNeeded
+                      params: 
+                            {'p':1.0, 'min_height':*img_size, 'min_width':*img_size, 'border_mode':0, 'value':[255, 255, 255]}
+                - name: Compose
+                  params:
+                    {'p':1.0}
+                  member:
+                    - name: PadIfNeeded
+                      params: 
+                            {'p':1.0, 'min_height':*img_size, 'min_width':*img_size, 'border_mode':0, 'value':[255, 255, 255]}
+                            # {'p':1.0, 'min_height':*img_height, 'min_width':*img_width, 'border_mode':0}
+                    - name: Affine
+                      params:
+                            {'p':1.0, 'scale':0.9, 'cval':[255, 255, 255]}
+                    - name: OneOf
+                      params:
+                            {'p':1.0}
+                      member:
+                            list(A.Affine(scale=s/10, p=1.0, cval=(255, 255, 255)) for s in range(6,11))
+                    - name: RandomResizedCrop
+                      params:
+                            {'p':1.0, 'height':*img_size, 'width':*img_size, 'scale':[0.4, 1.0]}
+            - name: GaussianBlur
+              params:
+                    {'p':0.5, 'sigma_limit':[0.1, 2.0]}
+            - name: Normalize
+              params:
+                    {'mean': *mean, 'std': *std}
+    val: &val_transform
+        - name: LongestMaxSize
+          params:
+                {'p':1.0, 'max_size':*img_size}
+        - name: PadIfNeeded
+          params: 
+                {'p':1.0, 'min_height':*img_size, 'min_width':*img_size, 'border_mode':0, 'value':[255, 255, 255]}
+                # {'p':1.0, 'min_height':*img_height, 'min_width':*img_width, 'border_mode':0}
+        - name: Affine
+          params:
+                {'p':1.0, 'scale':0.9, 'cval':[255, 255, 255]}
+        - name: Normalize
+          params:
+                {'mean': *mean, 'std': *std}
+    test: *val_transform
+
+Loss:
+    name: losses.ContrastiveLoss
+    params:
+        pos_margin: 0.0
+        neg_margin: 1.0
+
+CrossBatchMemory:
+    enable: True
+    params:
+        memory_size: 1024
+        embedding_size: 512
+
+Optimizer:
+    name: optim.AdamW
+    params:
+        lr: 1.0e-4
+        # weight_decay: 1.0e-02
+
+Scheduler:
+    name: optim.lr_scheduler.CosineAnnealingWarmRestarts
+    params:
+        T_0: *epoch
+        T_mult: 1
+    interval: epoch  # epoch or step
+
+Callbacks:
+    ModelCheckpoint:
+        monitor: val_loss
+        mode: min
+        save_weights_only: True
+        verbose: True
+        save_last: True

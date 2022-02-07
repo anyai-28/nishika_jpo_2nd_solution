@@ -1,0 +1,9 @@
+{
+    "RAW_DATA_DIR": "./data/",
+    "PROCESSED_DATA_DIR": "./data/processed/",
+    "MODEL_CHECKPOINT_DIR": "./models/",
+    "PRETRAINED_MODEL_CHECKPOINT_DIR": "./pretrained_models/",
+    "USE_PRETRAIN": "False",
+    "LOGS_DIR": "./logs/",
+    "SUBMISSION_DEVICE": "cuda",
+    "SUBMISSION_DIR": "./submissions/"}
