@@ -1,6 +1,6 @@
 ## 概要
 Nishika  AI×商標：イメージサーチコンペティション（類似商標画像の検出）  
-2nd Solution  
+2nd place solution  
 Discussion：https://www.nishika.com/competitions/22/topics/213
 
 ## OSなど
