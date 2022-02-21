@@ -1,10 +1,3 @@
-## 使用ハードウェア
-- GPU : RTX A6000 / メモリ 48GB
-- CPU : 64コア / メモリ 500GB
-- ディスクサイズ： 450GB
-
-<br>
-
 ## OSなど
 - Ubuntu 18.04.6
 - CUDA Version 11.2
@@ -42,14 +35,3 @@ apt-get install python3-magic
 4. `python train_swin.py` (Swin Transformer学習)
 5. `settings.json`の**USE_PRETRAIN**を**False**に設定
 6. `python make_submit.py` (Submitファイル作成)
-
-<br>
-
-## 学習済みモデルを使用して予測のみ行う場合の、ソースコードの実行手順
-1. `settings.json`の**USE_PRETRAIN**を**True**に設定
-2. `python make_submit.py` (Submitファイル作成)
-
-<br>
-
-## 注意事項
-- 各データ処理コードは既存データを上書きします
