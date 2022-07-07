@@ -2,6 +2,7 @@
 Nishika  AI×商標：イメージサーチコンペティション（類似商標画像の検出）  
 2nd place solution  
 Discussion：https://www.nishika.com/competitions/22/topics/213
+Slide：https://speakerdeck.com/anyai/nishika-aixshang-biao-imezisatikonpeteisiyon-2nd-place-solution
 
 ## OSなど
 - Ubuntu 18.04.6
