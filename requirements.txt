@@ -606,7 +606,7 @@ randomgen==1.16.6
 rasterio==1.2.10
 rasterstats==0.16.0
 ray==1.8.0
-redis==4.0.2
+# redis==4.0.2
 regex @ file:///home/conda/feedstock_root/build_artifacts/regex_1636504130952/work
 requests @ file:///tmp/build/80754af9/requests_1608241421344/work
 requests-futures==1.0.0
